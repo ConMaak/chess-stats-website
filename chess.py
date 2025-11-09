@@ -1,6 +1,3 @@
-# Script to fetch Chess.com blitz games for a given user within a date range,
-# extract rating and game duration data, and plot rating progression over time.
-
 import requests
 import time
 from datetime import datetime
@@ -31,8 +28,6 @@ urls = [f"https://api.chess.com/pub/player/{username}/games/{year}/{month:02d}"
         for year, month in extract_years_months(start_date, end_date)]
 
 for url in urls:
-
-#    print(url)
     
     response = requests.get(url, headers=headers)
     time.sleep(1)
@@ -48,8 +43,6 @@ for url in urls:
             dates.append(full_date)
 
             date_only = full_date.date()
-
-#           print(date)
 
             start_time_match = re.search(r'\[StartTime "(\d{2}:\d{2}:\d{2})"\]', game['pgn'])
             end_time_match = re.search(r'\[EndTime "(\d{2}:\d{2}:\d{2})"\]', game['pgn'])
@@ -72,8 +65,6 @@ for url in urls:
 
             durations.append(seconds)
 
-#            print(f"{end} - {start} = {seconds}") 
-
             if game['white']['username'] == username:
                 rating = game['white']['rating']
                 ratings.append(rating)   
@@ -82,7 +73,6 @@ for url in urls:
                 rating = game['black']['rating']
                 ratings.append(rating)
 
-    #    print(f"Blitz Rating: {data['chess_blitz']['last']['rating']}")
     else:
         print("Failed to fetch data:", response.status_code)
 
