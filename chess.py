@@ -63,8 +63,8 @@ else:
 
 insert_player_data(cur, player_id, username, display_name, current_rating)
 
-start_input = "2025-01-01"
-end_input = "2025-11-08"
+start_input = "2018-05-01"
+end_input = "2025-11-10"
 
 start_date = datetime.strptime(start_input, "%Y-%m-%d").date()
 end_date =  datetime.strptime(end_input, "%Y-%m-%d").date()
@@ -75,7 +75,7 @@ urls = [f"https://api.chess.com/pub/player/{username}/games/{year}/{month:02d}"
 for url in urls:
     
     response = requests.get(url, headers=headers)
-    time.sleep(1)
+    time.sleep(.5)
 
     if response.status_code == 200:
         data = response.json()
@@ -89,8 +89,14 @@ for url in urls:
 
             date_only = full_date.date()
 
-            start_time_match = re.search(r'\[StartTime "(\d{2}:\d{2}:\d{2})"\]', game['pgn'])
-            end_time_match = re.search(r'\[EndTime "(\d{2}:\d{2}:\d{2})"\]', game['pgn'])
+            pgn = game.get('pgn')
+
+            if not pgn:
+                 print(f"[SKIPPED] Game {game.get('url', '(no id)')} has no PGN.")
+                 continue
+                 
+            start_time_match = re.search(r'\[StartTime "(\d{2}:\d{2}:\d{2})"\]', pgn)
+            end_time_match = re.search(r'\[EndTime "(\d{2}:\d{2}:\d{2})"\]', pgn)
 
             start = start_time_match.group(1)
             end = end_time_match.group(1)
