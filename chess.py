@@ -81,8 +81,8 @@ for url in urls:
         data = response.json()
         for game in data['games']:
 
-            if game['time_class'] != 'blitz':
-                continue
+#            if game['time_class'] != 'blitz':
+#                continue
 
             full_date = datetime.fromtimestamp(game['end_time'])
             dates.append(full_date)
@@ -92,32 +92,34 @@ for url in urls:
             pgn = game.get('pgn')
 
             if not pgn:
-                 print(f"[SKIPPED] Game {game.get('url', '(no id)')} has no PGN.")
-                 continue
-                 
-            start_time_match = re.search(r'\[StartTime "(\d{2}:\d{2}:\d{2})"\]', pgn)
-            end_time_match = re.search(r'\[EndTime "(\d{2}:\d{2}:\d{2})"\]', pgn)
+                 print(f"[SKIPPED] Game {game.get('url', '(no id)')} has no PGN. {url}")
 
-            start = start_time_match.group(1)
-            end = end_time_match.group(1)
+            if pgn:     
+                start_time_match = re.search(r'\[StartTime "(\d{2}:\d{2}:\d{2})"\]', pgn)
+                end_time_match = re.search(r'\[EndTime "(\d{2}:\d{2}:\d{2})"\]', pgn)
 
-            format = "%H:%M:%S"
+            if start_time_match and end_time_match:
 
-            start_time_day = datetime.strptime(start, format).time()
-            end_time_day = datetime.strptime(end, format).time()
+                start = start_time_match.group(1)
+                end = end_time_match.group(1)
 
-            start_time = datetime.combine(date_only, start_time_day)
-            end_time = datetime.combine(date_only, end_time_day)
+                format = "%H:%M:%S"
 
-            if end_time < start_time:
-                end_time += timedelta(days=1)
+                start_time_day = datetime.strptime(start, format).time()
+                end_time_day = datetime.strptime(end, format).time()
 
-            duration = end_time - start_time
-            duration_seconds = duration.total_seconds()
+                start_time = datetime.combine(date_only, start_time_day)
+                end_time = datetime.combine(date_only, end_time_day)
 
-            duration_by_date[date_only] += duration_seconds
+                if end_time < start_time:
+                    end_time += timedelta(days=1)
 
-            durations.append(duration_seconds)
+                duration = end_time - start_time
+                duration_seconds = duration.total_seconds()
+
+                duration_by_date[date_only] += duration_seconds
+
+                durations.append(duration_seconds)
 
             if game['white']['username'] == username:
                 rating = game['white']['rating']
@@ -143,7 +145,6 @@ for url in urls:
             result = game[played_as_color]['result']
             rating_after_game = game[played_as_color]['rating']
             time_class = game['time_class']
-            pgn = game['pgn']
 
             insert_game_data(cur, game_id, player_username, opponent_username, opponent_rating, played_as_color, result, rating_after_game, time_class, start_time, end_time, duration_seconds, pgn)
      
