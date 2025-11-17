@@ -1,8 +1,6 @@
 import requests
 import time
-from datetime import datetime
-from datetime import timedelta
-import matplotlib.pyplot as plt
+from datetime import datetime, timedelta, timezone
 import re
 from chess_functions import *
 from collections import defaultdict
@@ -29,9 +27,8 @@ conn = psycopg2.connect(
 
 cur = conn.cursor()
 
-dates = []
-ratings = []
-durations = []
+count = 0
+
 duration_by_date = defaultdict(float)
 
 headers = {
@@ -63,7 +60,7 @@ else:
 
 insert_player_data(cur, player_id, username, display_name, current_rating)
 
-start_input = "2018-05-01"
+start_input = "2025-01-01"
 end_input = "2025-11-10"
 
 start_date = datetime.strptime(start_input, "%Y-%m-%d").date()
@@ -75,17 +72,13 @@ urls = [f"https://api.chess.com/pub/player/{username}/games/{year}/{month:02d}"
 for url in urls:
     
     response = requests.get(url, headers=headers)
-    time.sleep(.5)
+    time.sleep(.2)
 
     if response.status_code == 200:
         data = response.json()
         for game in data['games']:
 
-#            if game['time_class'] != 'blitz':
-#                continue
-
-            full_date = datetime.fromtimestamp(game['end_time'])
-            dates.append(full_date)
+            full_date = datetime.fromtimestamp(game['end_time'], tz=timezone.utc)
 
             date_only = full_date.date()
 
@@ -108,8 +101,8 @@ for url in urls:
                 start_time_day = datetime.strptime(start, format).time()
                 end_time_day = datetime.strptime(end, format).time()
 
-                start_time = datetime.combine(date_only, start_time_day)
-                end_time = datetime.combine(date_only, end_time_day)
+                start_time = datetime.combine(date_only, start_time_day).replace(tzinfo=timezone.utc)
+                end_time = datetime.combine(date_only, end_time_day).replace(tzinfo=timezone.utc)
 
                 if end_time < start_time:
                     end_time += timedelta(days=1)
@@ -119,16 +112,12 @@ for url in urls:
 
                 duration_by_date[date_only] += duration_seconds
 
-                durations.append(duration_seconds)
-
             if game['white']['username'] == username:
                 rating = game['white']['rating']
-                ratings.append(rating)
                 played_as_color = 'white'   
 
             elif game['black']['username'] == username:
                 rating = game['black']['rating']
-                ratings.append(rating)
                 played_as_color = 'black'  
 
             game_id = int(game['url'].rstrip("/").split("/")[-1])
@@ -145,21 +134,14 @@ for url in urls:
             result = game[played_as_color]['result']
             rating_after_game = game[played_as_color]['rating']
             time_class = game['time_class']
+            count += 1
 
             insert_game_data(cur, game_id, player_username, opponent_username, opponent_rating, played_as_color, result, rating_after_game, time_class, start_time, end_time, duration_seconds, pgn)
      
     else:
         print("Failed to fetch data:", response.status_code)
 
+print(f"Success! {count} games stored")
 conn.commit()
 cur.close()
 conn.close()
-
-sorted_days = sorted(duration_by_date)
-daily_minutes = [duration_by_date[day] / 60 for day in sorted_days]
-
-# plot_date_durations(sorted_days, daily_minutes)
-# plot_date_ratings(dates, ratings)
-# plot_rating_and_duration_dual_axis(dates, ratings, sorted_days, daily_minutes)
-# plot_rating_colored_by_playtime(dates, ratings, duration_by_date)
-# plt.show()
