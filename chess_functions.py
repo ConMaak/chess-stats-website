@@ -1,14 +1,57 @@
-def insert_player_data(cur, player_id, username_normalized, username_display, display_name=None, current_rating=None, date_joined=None, profile_image=None):
+import time
+import requests
+from datetime import datetime, timedelta, timezone
+
+def fetch_player_data(username_normalized, headers): 
+    response = requests.get(f"https://api.chess.com/pub/player/{username_normalized}", headers=headers)
+    time.sleep(1)
+
+    player_data = {}
+
+    if response.status_code == 200:
+        data = response.json()
+
+        player_data['player_id'] = data['player_id']
+
+        joined_ts = data.get('joined')
+        if joined_ts is None:
+             return None
+        
+        player_data['display_name'] = data.get('name')
+        player_data['date_joined'] = datetime.fromtimestamp(joined_ts, tz=timezone.utc)
+        player_data['profile_image'] = data.get('avatar')
+
+    else:
+            print("Failed to fetch data:", response.status_code)
+            return None
+
+    response = requests.get(f"https://api.chess.com/pub/player/{username_normalized}/stats", headers=headers)
+    time.sleep(1)
+
+    if response.status_code == 200:
+        data = response.json()
+        player_data['current_rating_blitz'] = data.get('chess_blitz', {}).get('last', {}).get('rating')
+        player_data['current_rating_rapid'] = data.get('chess_rapid', {}).get('last', {}).get('rating')
+        player_data['current_rating_bullet'] = data.get('chess_bullet', {}).get('last', {}).get('rating')
+
+    else:
+            print("Failed to fetch data:", response.status_code)
+
+    return player_data
+
+def insert_player_data(cur, player_id, username_normalized, username_display, display_name=None, current_rating_blitz=None, current_rating_rapid=None, current_rating_bullet=None, date_joined=None, profile_image=None):
     cur.execute("""
-        INSERT INTO players (player_id, username_normalized, username_display, display_name, current_rating, date_joined, profile_image, last_updated)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())
+        INSERT INTO players (player_id, username_normalized, username_display, display_name, current_rating_blitz, current_rating_rapid, current_rating_bullet, date_joined, profile_image, last_updated)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
         ON CONFLICT (player_id) DO UPDATE
         SET username_normalized = EXCLUDED.username_normalized,
-            current_rating = EXCLUDED.current_rating,
+            current_rating_blitz = EXCLUDED.current_rating_blitz,
+            current_rating_rapid = EXCLUDED.current_rating_rapid,
+            current_rating_bullet = EXCLUDED.current_rating_bullet,
             profile_image = EXCLUDED.profile_image,
             username_display = EXCLUDED.username_display,
             last_updated = NOW();
-    """, (player_id, username_normalized, username_display, display_name, current_rating, date_joined, profile_image))
+    """, (player_id, username_normalized, username_display, display_name, current_rating_blitz, current_rating_rapid, current_rating_bullet, date_joined, profile_image))
 
 def update_player_username(cur, username_display, player_id):
     cur.execute("""

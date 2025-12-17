@@ -27,41 +27,39 @@ conn = psycopg2.connect(
 
 cur = conn.cursor()
 games_count_total = 0
-duration_by_date = defaultdict(float)
 username_display = None
 
 headers = {
     "User-Agent": "ConnorChessTracker (Personal project; beginner dev; contact: ronnnoc715@yahoo.com)"
 }
 
-username_normalized = "gothamchess".lower()
+username_normalized = "neerajfrommacungie".lower()
 
-response = requests.get(f"https://api.chess.com/pub/player/{username_normalized}", headers=headers)
-time.sleep(1)
+player_data = fetch_player_data(username_normalized, headers)
 
-if response.status_code == 200:
-    player_data = response.json()
-    player_id = player_data['player_id']
-    display_name = player_data.get('name')
-    date_joined = datetime.fromtimestamp(player_data.get('joined'), tz=timezone.utc)
-    profile_image = player_data['avatar']
+if player_data is None:
+    print(f"Could not fetch player profile data for {username_normalized}. Aborting.")
+    cur.close()
+    conn.close()
 
+player_id = player_data['player_id']
+display_name = player_data['display_name']
+date_joined = player_data['date_joined']
+profile_image = player_data['profile_image']
+current_rating_blitz = player_data['current_rating_blitz']
+current_rating_rapid = player_data['current_rating_rapid']
+current_rating_bullet = player_data['current_rating_bullet']
+
+insert_player_data(cur, player_id, username_normalized, username_display, display_name, current_rating_blitz, current_rating_rapid, current_rating_bullet, date_joined, profile_image,
+)
+
+last_time  = get_last_game_time(cur, username_normalized)
+
+if last_time is None:
+    start_date = date_joined.date()
 else:
-        print("Failed to fetch data:", response.status_code)
+    start_date = last_time.date()
 
-response = requests.get(f"https://api.chess.com/pub/player/{username_normalized}/stats", headers=headers)
-time.sleep(1)
-
-if response.status_code == 200:
-    player_data = response.json()
-    current_rating = player_data['chess_blitz']['last']['rating']
-
-else:
-        print("Failed to fetch data:", response.status_code)
-
-insert_player_data(cur, player_id, username_normalized, username_display, display_name, current_rating, date_joined, profile_image)
-
-start_date = date_joined.date()
 end_date = datetime.now(timezone.utc).date()
 
 urls = [f"https://api.chess.com/pub/player/{username_normalized}/games/{year}/{month:02d}"
@@ -73,7 +71,7 @@ start_timer = datetime.now()
 
 for url in urls:
 
-    games_count_month = 0
+    games_count_month = 0 
     
     response = requests.get(url, headers=headers)
     time.sleep(.2)
@@ -114,8 +112,6 @@ for url in urls:
 
                 duration = end_duration - start_duration
                 duration_seconds = duration.total_seconds()
-
-                duration_by_date[date_only] += duration_seconds
 
             if username_display == None:
                 white_username = game['white']['username']
