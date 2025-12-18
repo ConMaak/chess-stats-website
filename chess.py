@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 import os
 import psycopg2 
 from psycopg2.extras import execute_values
+import sys
 
 load_dotenv()
 
@@ -41,6 +42,8 @@ if player_data is None:
     print(f"Could not fetch player profile data for {username_normalized}. Aborting.")
     cur.close()
     conn.close()
+    sys.exit(1)
+    
 
 player_id = player_data['player_id']
 display_name = player_data['display_name']
@@ -50,8 +53,7 @@ current_rating_blitz = player_data['current_rating_blitz']
 current_rating_rapid = player_data['current_rating_rapid']
 current_rating_bullet = player_data['current_rating_bullet']
 
-insert_player_data(cur, player_id, username_normalized, username_display, display_name, current_rating_blitz, current_rating_rapid, current_rating_bullet, date_joined, profile_image,
-)
+insert_player_data(cur, player_id, username_normalized, username_display, display_name, current_rating_blitz, current_rating_rapid, current_rating_bullet, date_joined, profile_image)
 
 last_time  = get_last_game_time(cur, username_normalized)
 
