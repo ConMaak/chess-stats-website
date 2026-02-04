@@ -46,7 +46,6 @@ def fetch_player_data(username_normalized, headers=None):
     return player_data
 
 def iterate_monthly_archives(username_normalized, start_year, start_month, end_year, end_month, headers=None):
-    
     if headers == None:
         headers = DEFAULT_HEADERS
 
@@ -60,7 +59,12 @@ def iterate_monthly_archives(username_normalized, start_year, start_month, end_y
         time.sleep(.2)
 
         if response.status_code == 200:
-            yield response.json()
+            response = response.json()
+            print(f"[OK] {year}-{month:02d}: {len(response.get('games', []))} games")
+            yield response
+
+        else:
+            print(f"[FAIL] {year}-{month:02d}: {response.status_code} {url}")
         
         if month == 12:
             year += 1
