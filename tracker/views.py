@@ -1,3 +1,10 @@
 from django.shortcuts import render
 
-# Create your views here.
+def home_view(request):
+    return render(request, "tracker/home.html")
+
+def player_dashboard_view(request, username):
+    context = {
+        "username": username,
+    }
+    return render(request, "tracker/player_dashboard.html", context)
