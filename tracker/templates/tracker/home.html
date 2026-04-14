@@ -5,6 +5,12 @@
 </head>
 <body>
     <h1>Chess Tracker</h1>
-    <p>This is the home page.</p>
+    <p>Enter a Chess.com username to view a dashboard.</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <input type="text" name="username" placeholder="Enter username">
+        <button type="submit">View Dashboard</button>
+    </form>
 </body>
 </html>

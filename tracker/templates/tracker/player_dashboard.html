@@ -5,6 +5,19 @@
 </head>
 <body>
     <h1>Player Dashboard</h1>
-    <p>You are viewing data for: {{ username }}</p>
+
+    <h2>Player Info</h2>
+    <p><strong>Username:</strong> {{ player.username_display|default:player.username_normalized }}</p>
+    <p><strong>Display Name:</strong> {{ player.display_name|default:"N/A" }}</p>
+    <p><strong>Date Joined:</strong> {{ player.date_joined|default:"N/A" }}</p>
+    <p><strong>Last Game Time:</strong> {{ player.last_game_time|default:"N/A" }}</p>
+
+    <h2>Ratings</h2>
+    <p><strong>Blitz:</strong> {{ player.current_rating_blitz|default:"N/A" }}</p>
+    <p><strong>Rapid:</strong> {{ player.current_rating_rapid|default:"N/A" }}</p>
+    <p><strong>Bullet:</strong> {{ player.current_rating_bullet|default:"N/A" }}</p>
+
+    <h2>Summary</h2>
+    <p><strong>Total Games:</strong> {{ total_games }}</p>
 </body>
 </html>
