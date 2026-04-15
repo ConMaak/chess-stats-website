@@ -19,5 +19,40 @@
 
     <h2>Summary</h2>
     <p><strong>Total Games:</strong> {{ total_games }}</p>
+
+    <h2>Recent Games</h2>
+
+    {% if recent_games %}
+        <table border="1" cellpadding="6" cellspacing="0">
+            <thead>
+                <tr>
+                    <th>End Time</th>
+                    <th>Time Class</th>
+                    <th>Color</th>
+                    <th>Opponent</th>
+                    <th>Opponent Rating</th>
+                    <th>Result</th>
+                    <th>Rating After</th>
+                    <th>Duration (sec)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for game in recent_games %}
+                    <tr>
+                        <td>{{ game.end_time|default:"N/A" }}</td>
+                        <td>{{ game.time_class|default:"N/A" }}</td>
+                        <td>{{ game.played_as_color|default:"N/A" }}</td>
+                        <td>{{ game.opponent_username|default:"N/A" }}</td>
+                        <td>{{ game.opponent_rating|default:"N/A" }}</td>
+                        <td>{{ game.result|default:"N/A" }}</td>
+                        <td>{{ game.rating_after_game|default:"N/A" }}</td>
+                        <td>{{ game.duration_seconds|default:"N/A" }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No games found for this player.</p>
+    {% endif %}
 </body>
 </html>
