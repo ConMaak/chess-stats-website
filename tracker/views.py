@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
 from .models import Player
 
 def home_view(request): 
@@ -20,3 +21,48 @@ def player_dashboard_view(request, username):
         "recent_games": recent_games,
     }
     return render(request, "tracker/player_dashboard.html", context)
+
+def player_summary_api_view(request, username):
+    player = get_object_or_404(Player, username_normalized=username)
+    total_games = player.games.count()
+
+    data = {
+        "username_normalized": player.username_normalized,
+        "username_display": player.username_display,
+        "display_name": player.display_name,
+        "profile_image": player.profile_image,
+        "date_joined": player.date_joined.isoformat() if player.date_joined else None,
+        "last_game_time": player.last_game_time.isoformat() if player.last_game_time else None,
+        "current_rating_blitz": player.current_rating_blitz,
+        "current_rating_rapid": player.current_rating_rapid,
+        "current_rating_bullet": player.current_rating_bullet,
+        "total_games": total_games,
+    }
+
+    return JsonResponse(data)
+
+
+def player_recent_games_api_view(request, username):
+    player = get_object_or_404(Player, username_normalized=username)
+    recent_games = player.games.order_by("-end_time")[:10]
+
+    data = {
+        "username_normalized": player.username_normalized,
+        "recent_games": [
+            {
+                "game_id": game.game_id,
+                "opponent_username": game.opponent_username,
+                "opponent_rating": game.opponent_rating,
+                "played_as_color": game.played_as_color,
+                "result": game.result,
+                "rating_after_game": game.rating_after_game,
+                "time_class": game.time_class,
+                "start_time": game.start_time.isoformat() if game.start_time else None,
+                "end_time": game.end_time.isoformat() if game.end_time else None,
+                "duration_seconds": game.duration_seconds,
+            }
+            for game in recent_games
+        ],
+    }
+
+    return JsonResponse(data)
