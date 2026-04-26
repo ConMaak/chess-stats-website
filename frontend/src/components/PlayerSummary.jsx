@@ -3,7 +3,7 @@ function PlayerSummary({ playerData, formatDateTime }) {
 
   return (
     <section className="mt-8 rounded-2xl border border-slate-700 bg-slate-950/70 p-6">
-      <div className="flex flex-col gap-6 md:flex-row md:items-start">
+      <div className="flex flex-col gap-6 md:flex-row md:items-center">
         {playerData.profile_image && (
           <img
             src={playerData.profile_image}
@@ -40,7 +40,7 @@ function PlayerSummary({ playerData, formatDateTime }) {
 
 function StatCard({ label, value }) {
   return (
-    <div className="rounded-xl border border-slate-700 bg-slate-900 p-4">
+    <div className="rounded-xl border border-slate-700 bg-slate-900 p-4 text-center">
       <p className="text-sm text-slate-400">{label}</p>
       <p className="mt-1 text-2xl font-bold text-slate-100">{value}</p>
     </div>
