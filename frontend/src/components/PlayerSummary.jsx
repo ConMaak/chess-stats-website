@@ -1,25 +1,48 @@
 function PlayerSummary({ playerData, formatDateTime }) {
-  return (
-    <div className="mt-6 rounded-lg bg-slate-50 p-4">
-      <h3 className="text-xl font-semibold">Player Summary</h3>
+  const username = playerData.username_display || playerData.username_normalized
 
-      {playerData.profile_image && (
-        <img
+  return (
+    <section className="mt-8 rounded-2xl border border-slate-700 bg-slate-950/70 p-6">
+      <div className="flex flex-col gap-6 md:flex-row md:items-start">
+        {playerData.profile_image && (
+          <img
             src={playerData.profile_image}
-            alt={`${playerData.username_display || playerData.username_normalized} profile`}
-            className="mt-4 max-h-40 max-w-xs rounded-lg object-contain"
-        />
+            alt={`${username} profile`}
+            className="max-h-40 max-w-xs rounded-2xl border border-slate-700 object-contain"
+          />
         )}
 
-      <div className="mt-4 space-y-2">
-        <p><strong>Username:</strong> {playerData.username_display || playerData.username_normalized}</p>
-        <p><strong>Display Name:</strong> {playerData.display_name || 'N/A'}</p>
-        <p><strong>Blitz:</strong> {playerData.current_rating_blitz ?? 'N/A'}</p>
-        <p><strong>Rapid:</strong> {playerData.current_rating_rapid ?? 'N/A'}</p>
-        <p><strong>Bullet:</strong> {playerData.current_rating_bullet ?? 'N/A'}</p>
-        <p><strong>Total Games:</strong> {playerData.total_games}</p>
-        <p><strong>Last Game Time:</strong> {formatDateTime(playerData.last_game_time)}</p>
+        <div className="flex-1">
+          <p className="text-sm font-semibold uppercase tracking-widest text-green-400">
+            Player Summary
+          </p>
+          <h3 className="mt-1 text-3xl font-bold">{username}</h3>
+          <p className="mt-1 text-slate-400">
+            {playerData.display_name || 'No display name'}
+          </p>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard label="Blitz" value={playerData.current_rating_blitz ?? 'N/A'} />
+            <StatCard label="Rapid" value={playerData.current_rating_rapid ?? 'N/A'} />
+            <StatCard label="Bullet" value={playerData.current_rating_bullet ?? 'N/A'} />
+            <StatCard label="Total Games" value={playerData.total_games} />
+          </div>
+
+          <p className="mt-5 text-sm text-slate-400">
+            <span className="font-medium text-slate-300">Last Game:</span>{' '}
+            {formatDateTime(playerData.last_game_time)}
+          </p>
+        </div>
       </div>
+    </section>
+  )
+}
+
+function StatCard({ label, value }) {
+  return (
+    <div className="rounded-xl border border-slate-700 bg-slate-900 p-4">
+      <p className="text-sm text-slate-400">{label}</p>
+      <p className="mt-1 text-2xl font-bold text-slate-100">{value}</p>
     </div>
   )
 }
