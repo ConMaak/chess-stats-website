@@ -60,9 +60,6 @@ function App() {
       const result = await refreshPlayerData(normalizedUsername)
       await loadDashboard(normalizedUsername)
 
-      setPlayerData(dashboardData.player)
-      setRecentGames(dashboardData.recentGames)
-
       setRefreshMessage(
         `Refresh complete. Inserted ${result.stats.games_inserted} new games.`
       )
