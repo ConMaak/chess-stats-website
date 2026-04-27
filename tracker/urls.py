@@ -7,4 +7,5 @@ urlpatterns = [
 
     path("api/player/<str:username>/", views.player_summary_api_view, name="player_summary_api"),
     path("api/player/<str:username>/recent-games/", views.player_recent_games_api_view, name="player_recent_games_api"),
+    path("api/player/<str:username>/refresh/", views.refresh_player_data_api_view, name="refresh_player_data_api"),
 ]

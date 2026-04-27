@@ -1,4 +1,4 @@
-function PlayerSummary({ playerData, formatDateTime }) {
+function PlayerSummary({ playerData, formatDateTime, onRefreshData, isRefreshing, }) {
   const username = playerData.username_display || playerData.username_normalized
 
   return (
@@ -13,13 +13,25 @@ function PlayerSummary({ playerData, formatDateTime }) {
         )}
 
         <div className="flex-1">
-          <p className="text-sm font-semibold uppercase tracking-widest text-green-400">
-            Player Summary
-          </p>
-          <h3 className="mt-1 text-3xl font-bold">{username}</h3>
-          <p className="mt-1 text-slate-400">
-            {playerData.display_name || 'No display name'}
-          </p>
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-widest text-green-400">
+                Player Summary
+              </p>
+              <h3 className="mt-1 text-3xl font-bold">{username}</h3>
+              <p className="mt-1 text-slate-400">
+                {playerData.display_name || 'No display name'}
+              </p>
+            </div>
+
+            <button
+              onClick={onRefreshData}
+              disabled={isRefreshing}
+              className="rounded-xl bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-500 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
+            </button>
+          </div>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard label="Blitz" value={playerData.current_rating_blitz ?? 'N/A'} />

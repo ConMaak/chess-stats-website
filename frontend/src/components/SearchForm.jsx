@@ -10,7 +10,7 @@ function SearchForm({ username, setUsername, handleSubmit }) {
       />
       <button
         type="submit"
-        className="rounded-xl bg-green-500 px-6 py-3 font-semibold text-slate-950 transition hover:bg-green-400 active:scale-[0.98]"
+        className="rounded-xl bg-green-500 px-6 py-3 font-semibold text-white transition hover:bg-green-400 active:scale-[0.98]"
       >
         Search
       </button>

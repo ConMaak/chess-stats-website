@@ -1,7 +1,6 @@
 const API_BASE_URL = 'http://127.0.0.1:8000/api'
 
-export async function fetchPlayerDashboard(username) {
-  const normalizedUsername = username.trim().toLowerCase()
+export async function fetchPlayerDashboard(normalizedUsername) {
 
   const [playerResponse, gamesResponse] = await Promise.all([
     fetch(`${API_BASE_URL}/player/${normalizedUsername}/`),
@@ -25,4 +24,23 @@ export async function fetchPlayerDashboard(username) {
     player: playerJson,
     recentGames: gamesJson.recent_games,
   }
+}
+
+export async function refreshPlayerData(username) {
+  const normalizedUsername = username.trim().toLowerCase()
+
+  const response = await fetch(
+    `${API_BASE_URL}/player/${normalizedUsername}/refresh/`,
+    {
+      method: 'POST',
+    }
+  )
+
+  const json = await response.json()
+
+  if (!response.ok) {
+    throw new Error(json.error || 'Could not refresh player data')
+  }
+
+  return json
 }

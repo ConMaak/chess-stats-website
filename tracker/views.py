@@ -1,6 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from .models import Player
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+from tracker.services.ingestion import ingest_player_games_data
 
 def home_view(request): 
     if request.method == "POST":
@@ -66,3 +69,25 @@ def player_recent_games_api_view(request, username):
     }
 
     return JsonResponse(data)
+
+@csrf_exempt
+@require_POST
+def refresh_player_data_api_view(request, username):
+    username = username.strip().lower()
+
+    try:
+        stats = ingest_player_games_data(username)
+    except ValueError as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+    return JsonResponse({
+        "message": "Refresh complete",
+        "stats": {
+            "months_processed": stats.months_processed,
+            "games_seen": stats.games_seen,
+            "games_inserted": stats.games_inserted,
+            "games_skipped_no_pgn": stats.games_skipped_no_pgn,
+            "games_skipped_timeclass": stats.games_skipped_timeclass,
+            "games_skipped_bad_id": stats.games_skipped_bad_id,
+        }
+    })

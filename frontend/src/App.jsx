@@ -2,20 +2,32 @@ import { useState } from 'react'
 import SearchForm from './components/SearchForm'
 import PlayerSummary from './components/PlayerSummary'
 import RecentGamesTable from './components/RecentGamesTable'
-import { fetchPlayerDashboard } from './api/chessApi'
+import { fetchPlayerDashboard, refreshPlayerData } from './api/chessApi'
 import { formatDateTime, formatDuration } from './utils/formatters'
 
 function App() {
   const [username, setUsername] = useState('')
   const [playerData, setPlayerData] = useState(null)
   const [recentGames, setRecentGames] = useState([])
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [refreshMessage, setRefreshMessage] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  function normalizeUsername(username) {
+  return username.trim().toLowerCase()
+  }
+
+  async function loadDashboard(normalizedUsername) {
+    const data = await fetchPlayerDashboard(normalizedUsername)
+    setPlayerData(data.player)
+    setRecentGames(data.recentGames)
+  }
 
   const handleSubmit = async (event) => {
     event.preventDefault()
 
-    const normalizedUsername = username.trim().toLowerCase()
+    const normalizedUsername = normalizeUsername(username)
 
     if (!normalizedUsername) {
       return
@@ -27,16 +39,39 @@ function App() {
     setRecentGames([])
 
     try {
-      const data = await fetchPlayerDashboard(normalizedUsername)
-
-      setPlayerData(data.player)
-      setRecentGames(data.recentGames)
+      await loadDashboard(normalizedUsername)
     } catch (err) {
       setError(err.message)
     } finally {
       setLoading(false)
     }
   }
+
+  async function handleRefreshData() {
+    const normalizedUsername = normalizeUsername(username)
+
+    if (!username.trim()) return
+
+    setIsRefreshing(true)
+    setRefreshMessage('')
+    setError('')
+
+    try {
+      const result = await refreshPlayerData(normalizedUsername)
+      await loadDashboard(normalizedUsername)
+
+      setPlayerData(dashboardData.player)
+      setRecentGames(dashboardData.recentGames)
+
+      setRefreshMessage(
+        `Refresh complete. Inserted ${result.stats.games_inserted} new games.`
+      )
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setIsRefreshing(false)
+    }
+}
 
 return (
   <div className="min-h-screen bg-[#0f1720] text-slate-100">
@@ -79,8 +114,14 @@ return (
           <PlayerSummary
             playerData={playerData}
             formatDateTime={formatDateTime}
+            onRefreshData={handleRefreshData}
+            isRefreshing={isRefreshing}
           />
         )}
+
+{refreshMessage && (
+  <p className="mt-3 text-sm text-green-300">{refreshMessage}</p>
+)}
 
         {playerData && (
           <RecentGamesTable
