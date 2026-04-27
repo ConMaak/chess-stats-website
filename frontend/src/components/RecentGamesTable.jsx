@@ -38,7 +38,7 @@ function RecentGamesTable({ recentGames, formatDateTime, formatDuration }) {
                   <td className="px-4 py-3 text-slate-300">{game.played_as_color || 'N/A'}</td>
                   <td className="px-4 py-3 font-medium text-slate-100">{game.opponent_username || 'N/A'}</td>
                   <td className="px-4 py-3 text-slate-300">{game.opponent_rating ?? 'N/A'}</td>
-                  <td className="px-4 py-3 text-slate-300">{game.result || 'N/A'}</td>
+                  <td className="px-4 py-3"><ResultBadge result={game.result} /></td>
                   <td className="px-4 py-3 text-slate-300">{game.rating_after_game ?? 'N/A'}</td>
                   <td className="px-4 py-3 text-slate-300">{formatDuration(game.duration_seconds)}</td>
                 </tr>
@@ -51,6 +51,63 @@ function RecentGamesTable({ recentGames, formatDateTime, formatDuration }) {
       )}
     </section>
   )
+}
+
+function ResultBadge({ result }) {
+  const displayResult = getResultLabel(result)
+  const resultType = getResultType(result)
+
+  const classes = {
+    win: 'bg-green-500/10 text-green-300 border-green-500/30',
+    loss: 'bg-red-500/10 text-red-300 border-red-500/30',
+    draw: 'bg-yellow-500/10 text-yellow-300 border-yellow-500/30',
+    unknown: 'bg-slate-500/10 text-slate-300 border-slate-500/30',
+  }
+
+  return (
+    <span
+      className={`rounded-full border px-2 py-1 text-xs font-medium ${classes[resultType]}`}
+    >
+      {displayResult}
+    </span>
+  )
+}
+
+function getResultType(result) {
+  if (!result) return 'unknown'
+
+  if (result === 'win') return 'win'
+
+  const drawResults = [
+    'agreed',
+    'repetition',
+    'stalemate',
+    'insufficient',
+    '50move',
+    'timevsinsufficient',
+  ]
+
+  if (drawResults.includes(result)) return 'draw'
+
+  return 'loss'
+}
+
+function getResultLabel(result) {
+  const labels = {
+    win: 'Win',
+    checkmated: 'Checkmated',
+    resigned: 'Resigned',
+    timeout: 'Timeout',
+    abandoned: 'Abandoned',
+    agreed: 'Draw',
+    repetition: 'Draw',
+    stalemate: 'Stalemate',
+    insufficient: 'Draw',
+    '50move': '50-move draw',
+    timevsinsufficient: 'Draw',
+  }
+
+  return labels[result] || result || 'N/A'
 }
 
 export default RecentGamesTable
