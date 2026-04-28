@@ -2,7 +2,7 @@ import { useState } from 'react'
 import SearchForm from './components/SearchForm'
 import PlayerSummary from './components/PlayerSummary'
 import RecentGamesTable from './components/RecentGamesTable'
-import { fetchPlayerDashboard, refreshPlayerData } from './api/chessApi'
+import { fetchPlayerDashboard, syncPlayerData } from './api/chessApi'
 import { formatDateTime, formatDuration } from './utils/formatters'
 
 function App() {
@@ -25,27 +25,44 @@ function App() {
   }
 
   const handleSubmit = async (event) => {
-    event.preventDefault()
+  event.preventDefault()
 
-    const normalizedUsername = normalizeUsername(username)
+  const normalizedUsername = normalizeUsername(username)
 
-    if (!normalizedUsername) {
-      return
-    }
+  if (!normalizedUsername) return
 
-    setLoading(true)
-    setError('')
-    setPlayerData(null)
-    setRecentGames([])
+  setError('')
+  setRefreshMessage('')
+  setLoading(true)
+  setIsRefreshing(false)
 
+  try {
     try {
       await loadDashboard(normalizedUsername)
-    } catch (err) {
-      setError(err.message)
-    } finally {
       setLoading(false)
+    } catch {
+      setPlayerData(null)
+      setRecentGames([])
     }
+
+    setIsRefreshing(true)
+
+    const result = await syncPlayerData(normalizedUsername)
+
+    await loadDashboard(normalizedUsername)
+
+  setRefreshMessage(
+    result.stats.games_inserted > 0
+      ? `Data updated. Inserted ${result.stats.games_inserted} new games.`
+      : 'Data is already up to date.'
+  )
+  } catch (err) {
+    setError(err.message)
+  } finally {
+    setLoading(false)
+    setIsRefreshing(false)
   }
+}
 
   async function handleRefreshData() {
     const normalizedUsername = normalizeUsername(username)
@@ -57,7 +74,7 @@ function App() {
     setError('')
 
     try {
-      const result = await refreshPlayerData(normalizedUsername)
+      const result = await syncPlayerData(normalizedUsername)
       await loadDashboard(normalizedUsername)
 
       setRefreshMessage(
@@ -97,8 +114,16 @@ return (
           handleSubmit={handleSubmit}
         />
 
-        {loading && (
-          <p className="mt-6 text-slate-400">Loading player data...</p>
+        {loading && !playerData && (
+          <p className="mt-6 rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-3 text-green-300">
+            Importing player data from Chess.com...
+          </p>
+        )}
+
+        {isRefreshing && playerData && (
+          <p className="mt-6 rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-3 text-green-300">
+            Updating data from Chess.com...
+          </p>
         )}
 
         {error && (
@@ -116,9 +141,9 @@ return (
           />
         )}
 
-{refreshMessage && (
-  <p className="mt-3 text-sm text-green-300">{refreshMessage}</p>
-)}
+        {refreshMessage && (
+          <p className="mt-3 text-sm text-green-300">{refreshMessage}</p>
+        )}
 
         {playerData && (
           <RecentGamesTable

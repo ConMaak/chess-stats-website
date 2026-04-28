@@ -26,7 +26,7 @@ export async function fetchPlayerDashboard(normalizedUsername) {
   }
 }
 
-export async function refreshPlayerData(username) {
+export async function syncPlayerData(username) {
   const normalizedUsername = username.trim().toLowerCase()
 
   const response = await fetch(
