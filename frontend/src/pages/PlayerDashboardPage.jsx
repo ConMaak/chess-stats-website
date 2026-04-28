@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import SearchForm from '../components/SearchForm'
 import PlayerSummary from '../components/PlayerSummary'
 import RecentGamesTable from '../components/RecentGamesTable'
@@ -7,6 +7,7 @@ import { fetchPlayerDashboard, syncPlayerData } from '../api/chessApi'
 import { formatDateTime, formatDuration } from '../utils/formatters'
 
 function PlayerDashboardPage() {
+  const navigate = useNavigate()
   const { username: usernameFromUrl } = useParams()
 
   const [username, setUsername] = useState(usernameFromUrl || '')
@@ -70,7 +71,7 @@ function PlayerDashboardPage() {
 
     if (!normalizedUsername) return
 
-    await loadAndSyncPlayer(normalizedUsername)
+    navigate(`/player/${normalizedUsername}`)
   }
 
   async function handleSyncData() {
@@ -98,6 +99,15 @@ function PlayerDashboardPage() {
       setIsRefreshing(false)
     }
   }
+
+  useEffect(() => {
+  if (!usernameFromUrl) return
+
+  const normalizedUsername = normalizeUsername(usernameFromUrl)
+
+  setUsername(normalizedUsername)
+  loadAndSyncPlayer(normalizedUsername)
+}, [usernameFromUrl])
 
   return (
     <div className="min-h-screen bg-[#0f1720] text-slate-100">
