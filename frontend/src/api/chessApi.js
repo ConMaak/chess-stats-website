@@ -44,3 +44,22 @@ export async function syncPlayerData(username) {
 
   return json
 }
+
+export async function syncPlayerProfile(username) {
+  const normalizedUsername = username.trim().toLowerCase()
+
+  const response = await fetch(
+    `${API_BASE_URL}/player/${normalizedUsername}/sync-profile/`,
+    {
+      method: 'POST',
+    }
+  )
+
+  const json = await response.json()
+
+  if (!response.ok) {
+    throw new Error(json.error || 'Could not sync player profile')
+  }
+
+  return json
+}

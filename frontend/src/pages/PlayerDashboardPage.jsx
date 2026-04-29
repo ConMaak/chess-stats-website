@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import SearchForm from '../components/SearchForm'
 import PlayerSummary from '../components/PlayerSummary'
 import RecentGamesTable from '../components/RecentGamesTable'
-import { fetchPlayerDashboard, syncPlayerData } from '../api/chessApi'
+import { fetchPlayerDashboard, syncPlayerData, syncPlayerProfile } from '../api/chessApi'
 import { formatDateTime, formatDuration } from '../utils/formatters'
 
 function PlayerDashboardPage() {
@@ -40,9 +40,11 @@ function PlayerDashboardPage() {
       try {
         await loadDashboard(normalizedUsername)
         setLoading(false)
-      } catch {
-        setPlayerData(null)
-        setRecentGames([])
+      } catch {const profile = await syncPlayerProfile(normalizedUsername)
+
+      setPlayerData(profile)
+      setRecentGames([])
+      setLoading(false)
       }
 
       setIsRefreshing(true)
@@ -134,14 +136,14 @@ function PlayerDashboardPage() {
           />
 
           {loading && !playerData && (
-            <p className="mt-6 rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-slate-400">
-              Importing player data from Chess.com...
+            <p className="mt-6 rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-3 text-green-300">
+              Loading player profile from Chess.com...
             </p>
           )}
 
           {isRefreshing && playerData && (
             <p className="mt-6 rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-3 text-green-300">
-              Updating data from Chess.com...
+              Importing latest games from Chess.com...
             </p>
           )}
 

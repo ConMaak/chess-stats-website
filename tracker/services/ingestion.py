@@ -42,6 +42,34 @@ class IngestStats:
     games_skipped_timeclass: int = 0
     games_skipped_bad_id: int = 0
 
+def sync_player_profile(username_normalized, headers=None):
+    if headers is None:
+        headers = DEFAULT_HEADERS
+
+    username_normalized = username_normalized.strip().lower()
+
+    player_data = fetch_player_data(username_normalized, headers)
+
+    if player_data is None:
+        raise ValueError(f"Could not fetch profile for {username_normalized}.")
+
+    player, created = Player.objects.update_or_create(
+        player_id=player_data["player_id"],
+        defaults={
+            "username_normalized": username_normalized,
+            "username_display": player_data.get("username_display"),
+            "display_name": player_data.get("display_name"),
+            "date_joined": player_data.get("date_joined"),
+            "profile_image": player_data.get("profile_image"),
+            "current_rating_blitz": player_data.get("current_rating_blitz"),
+            "current_rating_rapid": player_data.get("current_rating_rapid"),
+            "current_rating_bullet": player_data.get("current_rating_bullet"),
+        },
+    )
+
+    return player
+
+
 @transaction.atomic
 def ingest_player_games_data(username_normalized, headers=None):
     
@@ -51,23 +79,7 @@ def ingest_player_games_data(username_normalized, headers=None):
     username_normalized = username_normalized.strip().lower()
     stats = IngestStats()
 
-    player_data = fetch_player_data(username_normalized, headers)
-    if player_data is None:
-        raise ValueError(f'Could not fetch profile for {username_normalized}.')
-    
-    player, created = Player.objects.update_or_create(
-        player_id = player_data['player_id'],
-        defaults={
-            'username_normalized': username_normalized,
-            'username_display': player_data.get('username_display'),
-            'display_name': player_data.get('display_name'),
-            'date_joined': player_data.get('date_joined'),
-            'profile_image': player_data.get('profile_image'),
-            'current_rating_blitz': player_data.get('current_rating_blitz'),
-            'current_rating_rapid': player_data.get('current_rating_rapid'),
-            'current_rating_bullet': player_data.get('current_rating_bullet'),
-        },
-    )
+    player = sync_player_profile(username_normalized, headers)
 
     start_date = get_ingest_start_date(player)
     end_date = timezone.now().date()
