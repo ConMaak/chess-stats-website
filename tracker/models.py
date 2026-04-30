@@ -15,6 +15,7 @@ class Player(models.Model):
     last_game_time = models.DateTimeField(null=True, blank=True)
     profile_image = models.TextField(null=True, blank=True)
     last_updated = models.DateTimeField(null=True, blank=True, auto_now=True)
+    last_games_sync_time = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = 'players'

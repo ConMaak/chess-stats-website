@@ -8,6 +8,8 @@ from datetime import date, datetime, timezone as py_timezone, timedelta
 
 TIME_CLASSES_ALLOWED = {'blitz', 'bullet', 'rapid'}
 DEFAULT_HEADERS = {'User-Agent': 'ConnorChessTracker (Personal project; contact: ronnnoc715@yahoo.com)'}
+SYNC_COOLDOWN_MINUTES = 5
+
 
 def iterate_year_months(start, end):
 
@@ -68,6 +70,14 @@ def sync_player_profile(username_normalized, headers=None):
     )
 
     return player
+
+def should_skip_sync(player):
+    if not player.last_games_sync_time:
+        return False
+    
+    cutoff = timezone.now() - timedelta(minutes=SYNC_COOLDOWN_MINUTES)
+
+    return player.last_games_sync_time >= cutoff
 
 
 @transaction.atomic
@@ -187,7 +197,8 @@ def ingest_player_games_data(username_normalized, headers=None):
     )
 
     player.last_game_time = last_game_time
-    player.save(update_fields=["username_display", "last_game_time", "last_updated"])
+    player.last_games_sync_time = timezone.now()
+    player.save(update_fields=["username_display", "last_game_time", "last_updated", "last_games_sync_time",])
 
     return stats
 
