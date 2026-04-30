@@ -53,10 +53,14 @@ function PlayerDashboardPage() {
 
       await loadDashboard(normalizedUsername)
 
+      const minutesRemaining = Math.ceil(result.cooldown_seconds_remaining / 60)
+
       setRefreshMessage(
-        result.stats.games_inserted > 0
-          ? `Data updated. Inserted ${result.stats.games_inserted} new games.`
-          : 'Data is already up to date.'
+        result.skipped
+          ? `Data was synced recently. Try again in ${minutesRemaining} minute${minutesRemaining === 1 ? '' : 's'}.`
+          : result.stats.games_inserted > 0
+            ? `Data updated. Inserted ${result.stats.games_inserted} new games.`
+            : 'No new games to import.'
       )
     } catch (err) {
       setError(err.message)
@@ -90,10 +94,14 @@ function PlayerDashboardPage() {
 
       await loadDashboard(normalizedUsername)
 
+      const minutesRemaining = Math.ceil(result.cooldown_seconds_remaining / 60)
+
       setRefreshMessage(
-        result.stats.games_inserted > 0
-          ? `Data updated. Inserted ${result.stats.games_inserted} new games.`
-          : 'Data is already up to date.'
+        result.skipped
+          ? `Data was synced recently. Try again in ${minutesRemaining} minute${minutesRemaining === 1 ? '' : 's'}.`
+          : result.stats.games_inserted > 0
+            ? `Data updated. Inserted ${result.stats.games_inserted} new games.`
+            : 'No new games to import.'
       )
     } catch (err) {
       setError(err.message)

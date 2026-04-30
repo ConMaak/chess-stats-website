@@ -79,6 +79,16 @@ def should_skip_sync(player):
 
     return player.last_games_sync_time >= cutoff
 
+def get_game_sync_cooldown_seconds_remaining(player):
+    if not player.last_games_sync_time:
+        return 0
+    
+    cooldown_ends_at = player.last_games_sync_time + timedelta(minutes=SYNC_COOLDOWN_MINUTES)
+
+    remaining = cooldown_ends_at - timezone.now()
+
+    return max(0, int(remaining.total_seconds()))
+
 
 @transaction.atomic
 def ingest_player_games_data(username_normalized, headers=None):

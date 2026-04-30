@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from .models import Player
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from tracker.services.ingestion import ingest_player_games_data, sync_player_profile, should_skip_sync
+from tracker.services.ingestion import ingest_player_games_data, sync_player_profile, should_skip_sync, get_game_sync_cooldown_seconds_remaining
 
 def home_view(request): 
     if request.method == "POST":
@@ -40,6 +40,7 @@ def player_summary_api_view(request, username):
         "current_rating_rapid": player.current_rating_rapid,
         "current_rating_bullet": player.current_rating_bullet,
         "total_games": total_games,
+        "last_games_sync_time": player.last_games_sync_time.isoformat() if player.last_games_sync_time else None
     }
 
     return JsonResponse(data)
@@ -80,10 +81,13 @@ def refresh_player_data_api_view(request, username):
     except Player.DoesNotExist:
         player = None
 
+    seconds_remaining = get_game_sync_cooldown_seconds_remaining(player)
+
     if player and should_skip_sync(player):
         return JsonResponse({
             "message": "Recently synced; skipping update.",
             "skipped": True,
+            "cooldown_seconds_remaining": seconds_remaining,
             "stats": {
                 "months_processed": 0,
                 "games_seen": 0,

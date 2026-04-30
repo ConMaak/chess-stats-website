@@ -41,8 +41,8 @@ function PlayerSummary({ playerData, formatDateTime, onRefreshData, isRefreshing
           </div>
 
           <p className="mt-5 text-sm text-slate-400">
-            <span className="font-medium text-slate-300">Last Game:</span>{' '}
-            {formatDateTime(playerData.last_game_time)}
+            <span className="font-medium text-slate-300">Last Updated:</span>{' '}
+            {formatDateTime(playerData.last_games_sync_time)}
           </p>
         </div>
       </div>
