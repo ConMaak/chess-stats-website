@@ -57,6 +57,9 @@ class Game(models.Model):
 
     class Meta:
         db_table = 'games'
+        indexes = [
+            models.Index(fields=["player", "-end_time"], name="games_player_end_idx"),
+    ]
 
     def __str__(self):
         return str(self.game_id)
