@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import SearchForm from '../components/SearchForm'
 import PlayerSummary from '../components/PlayerSummary'
@@ -18,17 +18,19 @@ function PlayerDashboardPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  const activeRequestRef = useRef(null)
+
   function normalizeUsername(username) {
     return username.trim().toLowerCase()
   }
 
-  async function loadDashboard(normalizedUsername) {
-    const data = await fetchPlayerDashboard(normalizedUsername)
+  async function loadDashboard(normalizedUsername, signal) {
+    const data = await fetchPlayerDashboard(normalizedUsername, signal)
     setPlayerData(data.player)
     setRecentGames(data.recentGames)
   }
 
-  async function loadAndSyncPlayer(normalizedUsername) {
+  async function loadAndSyncPlayer(normalizedUsername, signal) {
     if (!normalizedUsername) return
 
     setError('')
@@ -38,9 +40,9 @@ function PlayerDashboardPage() {
 
     try {
       try {
-        await loadDashboard(normalizedUsername)
+        await loadDashboard(normalizedUsername, signal)
         setLoading(false)
-      } catch {const profile = await syncPlayerProfile(normalizedUsername)
+      } catch {const profile = await syncPlayerProfile(normalizedUsername, signal)
 
       setPlayerData(profile)
       setRecentGames([])
@@ -49,9 +51,9 @@ function PlayerDashboardPage() {
 
       setIsRefreshing(true)
 
-      const result = await syncPlayerData(normalizedUsername)
+      const result = await syncPlayerData(normalizedUsername, signal)
 
-      await loadDashboard(normalizedUsername)
+      await loadDashboard(normalizedUsername, signal)
 
       const minutesRemaining = Math.ceil(result.cooldown_seconds_remaining / 60)
 
@@ -65,8 +67,10 @@ function PlayerDashboardPage() {
     } catch (err) {
       setError(err.message)
     } finally {
+      if (!signal.aborted) {
       setLoading(false)
       setIsRefreshing(false)
+      }
     }
   }
 
@@ -113,10 +117,22 @@ function PlayerDashboardPage() {
   useEffect(() => {
   if (!usernameFromUrl) return
 
+  if (activeRequestRef.current){
+    activeRequestRef.current.abort()
+  }
+
+  const controller = new AbortController()
+  activeRequestRef.current = controller
+
   const normalizedUsername = normalizeUsername(usernameFromUrl)
 
   setUsername(normalizedUsername)
-  loadAndSyncPlayer(normalizedUsername)
+  loadAndSyncPlayer(normalizedUsername, controller.signal)
+
+  return () => {
+    controller.abort()
+  }
+
 }, [usernameFromUrl])
 
   return (

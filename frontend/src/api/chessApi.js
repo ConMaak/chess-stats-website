@@ -1,10 +1,9 @@
 const API_BASE_URL = 'http://127.0.0.1:8000/api'
 
-export async function fetchPlayerDashboard(normalizedUsername) {
-
+export async function fetchPlayerDashboard(normalizedUsername, signal) {
   const [playerResponse, gamesResponse] = await Promise.all([
-    fetch(`${API_BASE_URL}/player/${normalizedUsername}/`),
-    fetch(`${API_BASE_URL}/player/${normalizedUsername}/recent-games/`),
+    fetch(`${API_BASE_URL}/player/${normalizedUsername}/`, { signal }),
+    fetch(`${API_BASE_URL}/player/${normalizedUsername}/recent-games/`, { signal }),
   ])
 
   if (!playerResponse.ok) {
@@ -26,13 +25,14 @@ export async function fetchPlayerDashboard(normalizedUsername) {
   }
 }
 
-export async function syncPlayerData(username) {
+export async function syncPlayerData(username, signal) {
   const normalizedUsername = username.trim().toLowerCase()
 
   const response = await fetch(
     `${API_BASE_URL}/player/${normalizedUsername}/refresh/`,
     {
       method: 'POST',
+      signal,
     }
   )
 
@@ -45,13 +45,14 @@ export async function syncPlayerData(username) {
   return json
 }
 
-export async function syncPlayerProfile(username) {
+export async function syncPlayerProfile(username, signal) {
   const normalizedUsername = username.trim().toLowerCase()
 
   const response = await fetch(
     `${API_BASE_URL}/player/${normalizedUsername}/sync-profile/`,
     {
       method: 'POST',
+      signal,
     }
   )
 
