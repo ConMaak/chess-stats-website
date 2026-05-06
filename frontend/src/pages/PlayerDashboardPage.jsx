@@ -17,6 +17,7 @@ function PlayerDashboardPage() {
   const [refreshMessage, setRefreshMessage] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [syncStatus, setSyncStatus] = useState('idle')
 
   const activeRequestRef = useRef(null)
 
@@ -37,16 +38,19 @@ function PlayerDashboardPage() {
     setRefreshMessage('')
     setLoading(true)
     setIsRefreshing(false)
+    setSyncStatus['loading-profile']
 
     try {
       try {
         await loadDashboard(normalizedUsername, signal)
         setLoading(false)
+        setSyncStatus('updating-existing')
       } catch {const profile = await syncPlayerProfile(normalizedUsername, signal)
 
       setPlayerData(profile)
       setRecentGames([])
       setLoading(false)
+      setSyncStatus('syncing-games')
       }
 
       setIsRefreshing(true)
@@ -70,6 +74,7 @@ function PlayerDashboardPage() {
       if (!signal.aborted) {
       setLoading(false)
       setIsRefreshing(false)
+      setSyncStatus('idle')
       }
     }
   }
@@ -92,6 +97,7 @@ function PlayerDashboardPage() {
     setIsRefreshing(true)
     setRefreshMessage('')
     setError('')
+    setSyncStatus('updating-existing')
 
     try {
       const result = await syncPlayerData(normalizedUsername)
@@ -111,6 +117,7 @@ function PlayerDashboardPage() {
       setError(err.message)
     } finally {
       setIsRefreshing(false)
+      setSyncStatus('idle')
     }
   }
 
@@ -159,15 +166,11 @@ function PlayerDashboardPage() {
             handleSubmit={handleSubmit}
           />
 
-          {loading && !playerData && (
+          {syncStatus !== 'idle' && (
             <p className="mt-6 rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-3 text-green-300">
-              Loading player profile from Chess.com...
-            </p>
-          )}
-
-          {isRefreshing && playerData && (
-            <p className="mt-6 rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-3 text-green-300">
-              Importing latest games from Chess.com...
+              {syncStatus === 'loading-profile' && 'Loading player profile from Chess.com...'}
+              {syncStatus === 'syncing-games' && 'Importing games for this player...'}
+              {syncStatus === 'updating-existing' && 'Checking for new games...'}
             </p>
           )}
 
