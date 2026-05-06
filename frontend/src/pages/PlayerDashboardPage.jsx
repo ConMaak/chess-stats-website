@@ -45,8 +45,12 @@ function PlayerDashboardPage() {
         await loadDashboard(normalizedUsername, signal)
         setLoading(false)
         setSyncStatus('updating-existing')
-      } catch {const profile = await syncPlayerProfile(normalizedUsername, signal)
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          throw err
+        }
 
+  const profile = await syncPlayerProfile(normalizedUsername, signal)
       setPlayerData(profile)
       setRecentGames([])
       setLoading(false)
@@ -69,6 +73,7 @@ function PlayerDashboardPage() {
             : 'No new games to import.'
       )
     } catch (err) {
+      if (errname === 'AbortError') return
       setError(err.message)
     } finally {
       if (!signal.aborted) {
@@ -94,15 +99,17 @@ function PlayerDashboardPage() {
 
     if (!normalizedUsername) return
 
+    const controller = new AbortController()
+
     setIsRefreshing(true)
     setRefreshMessage('')
     setError('')
     setSyncStatus('updating-existing')
 
     try {
-      const result = await syncPlayerData(normalizedUsername)
+      const result = await syncPlayerData(normalizedUsername, controller.signal)
 
-      await loadDashboard(normalizedUsername)
+      await loadDashboard(normalizedUsername, controller.signal)
 
       const minutesRemaining = Math.ceil(result.cooldown_seconds_remaining / 60)
 
@@ -116,8 +123,10 @@ function PlayerDashboardPage() {
     } catch (err) {
       setError(err.message)
     } finally {
+      if (!controller.signal.aborted){
       setIsRefreshing(false)
       setSyncStatus('idle')
+      }
     }
   }
 
