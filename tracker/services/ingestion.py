@@ -9,6 +9,7 @@ from datetime import date, datetime, timezone as py_timezone, timedelta
 TIME_CLASSES_ALLOWED = {'blitz', 'bullet', 'rapid'}
 DEFAULT_HEADERS = {'User-Agent': 'ConnorChessTracker (Personal project; contact: ronnnoc715@yahoo.com)'}
 SYNC_COOLDOWN_MINUTES = 5
+PROFILE_SYNC_COOLDOWN_MINUTES = 5
 
 
 def iterate_year_months(start, end):
@@ -66,6 +67,7 @@ def sync_player_profile(username_normalized, headers=None):
             "current_rating_blitz": player_data.get("current_rating_blitz"),
             "current_rating_rapid": player_data.get("current_rating_rapid"),
             "current_rating_bullet": player_data.get("current_rating_bullet"),
+            "last_profile_sync_time": timezone.now(),
         },
     )
 
@@ -79,12 +81,28 @@ def should_skip_sync(player):
 
     return player.last_games_sync_time >= cutoff
 
+def should_skip_profile_sync(player):
+    if not player or not player.last_profile_sync_time:
+        return False
+    
+    cutoff = timezone.now() - timedelta(minutes=PROFILE_SYNC_COOLDOWN_MINUTES)
+
+    return player.last_profile_sync_time >= cutoff
+
 def get_game_sync_cooldown_seconds_remaining(player):
     if not player.last_games_sync_time:
         return 0
     
     cooldown_ends_at = player.last_games_sync_time + timedelta(minutes=SYNC_COOLDOWN_MINUTES)
+    remaining = cooldown_ends_at - timezone.now()
 
+    return max(0, int(remaining.total_seconds()))
+
+def get_profile_sync_cooldown_seconds_remaining(player):
+    if not player or not player.last_profile_sync_time:
+        return 0
+
+    cooldown_ends_at = player.last_profile_sync_time + timedelta(minutes=PROFILE_SYNC_COOLDOWN_MINUTES)
     remaining = cooldown_ends_at - timezone.now()
 
     return max(0, int(remaining.total_seconds()))

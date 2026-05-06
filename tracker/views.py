@@ -3,7 +3,13 @@ from django.http import JsonResponse
 from .models import Player
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from tracker.services.ingestion import ingest_player_games_data, sync_player_profile, should_skip_sync, get_game_sync_cooldown_seconds_remaining
+from tracker.services.ingestion import (
+    ingest_player_games_data, 
+    sync_player_profile, 
+    should_skip_sync, 
+    get_game_sync_cooldown_seconds_remaining,
+    should_skip_profile_sync,
+    get_profile_sync_cooldown_seconds_remaining,)
 
 def home_view(request): 
     if request.method == "POST":
@@ -40,7 +46,8 @@ def player_summary_api_view(request, username):
         "current_rating_rapid": player.current_rating_rapid,
         "current_rating_bullet": player.current_rating_bullet,
         "total_games": total_games,
-        "last_games_sync_time": player.last_games_sync_time.isoformat() if player.last_games_sync_time else None
+        "last_games_sync_time": player.last_games_sync_time.isoformat() if player.last_games_sync_time else None,
+        "last_profile_sync_time": player.last_profile_sync_time.isoformat() if player.last_profile_sync_time else None,
     }
 
     return JsonResponse(data)
@@ -121,9 +128,21 @@ def sync_player_profile_api_view(request, username):
     username = username.strip().lower()
 
     try:
-        player = sync_player_profile(username)
-    except ValueError as e:
-        return JsonResponse({"error": str(e)}, status=400)
+        player = Player.objects.get(username_normalized=username)
+    except Player.DoesNotExist:
+        player = None
+
+    if player and should_skip_profile_sync(player):
+        skipped = True
+        cooldown_seconds_remaining = get_profile_sync_cooldown_seconds_remaining(player)
+    else:
+        try:
+            player = sync_player_profile(username)
+        except ValueError as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+        skipped = False
+        cooldown_seconds_remaining = 0
 
     data = {
         "username_normalized": player.username_normalized,
@@ -136,6 +155,8 @@ def sync_player_profile_api_view(request, username):
         "current_rating_rapid": player.current_rating_rapid,
         "current_rating_bullet": player.current_rating_bullet,
         "total_games": player.games.count(),
+        "skipped": skipped,
+        "cooldown_seconds_remaining": cooldown_seconds_remaining,
     }
 
     return JsonResponse(data)
