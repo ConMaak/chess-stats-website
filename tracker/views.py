@@ -78,6 +78,25 @@ def player_recent_games_api_view(request, username):
 
     return JsonResponse(data)
 
+def player_sync_status_api_view(request, username):
+    username = username.strip().lower()
+    player = get_object_or_404(Player, username_normalized=username)
+
+    game_cooldown_seconds = get_game_sync_cooldown_seconds_remaining(player)
+    profile_cooldown_seconds = get_profile_sync_cooldown_seconds_remaining(player)
+
+    data = {
+        "username_normalized": player.username_normalized,
+        "last_games_sync_time": player.last_games_sync_time.isoformat() if player.last_games_sync_time else None,
+        "last_profile_sync_time": player.last_profile_sync_time.isoformat() if player.last_profile_sync_time else None,
+        "game_sync_cooldown_seconds_remaining": game_cooldown_seconds,
+        "profile_sync_cooldown_seconds_remaining": profile_cooldown_seconds,
+        "can_sync_games": game_cooldown_seconds == 0,
+        "can_sync_profile": profile_cooldown_seconds == 0,
+    }
+
+    return JsonResponse(data)
+
 @csrf_exempt
 @require_POST
 def refresh_player_data_api_view(request, username):

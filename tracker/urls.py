@@ -9,4 +9,6 @@ urlpatterns = [
     path("api/player/<str:username>/recent-games/", views.player_recent_games_api_view, name="player_recent_games_api"),
     path("api/player/<str:username>/refresh/", views.refresh_player_data_api_view, name="refresh_player_data_api"),
     path("api/player/<str:username>/sync-profile/", views.sync_player_profile_api_view, name = "sync_player_profile_api"),
+    path("api/player/<str:username>/sync-status/", views.player_sync_status_api_view, name="player_sync_status_api",
+),
 ]
