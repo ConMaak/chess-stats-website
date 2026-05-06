@@ -50,7 +50,10 @@ function PlayerDashboardPage() {
           throw err
         }
 
-  const profile = await syncPlayerProfile(normalizedUsername, signal)
+      setSyncStatus('loading-profile')
+        
+      const profile = await syncPlayerProfile(normalizedUsername, signal)
+
       setPlayerData(profile)
       setRecentGames([])
       setLoading(false)
@@ -177,6 +180,7 @@ function PlayerDashboardPage() {
 
           {syncStatus !== 'idle' && (
             <p className="mt-6 rounded-xl border border-green-500/30 bg-green-500/10 px-4 py-3 text-green-300">
+              {syncStatus === 'loading-player' && 'Loading player...'}
               {syncStatus === 'loading-profile' && 'Loading player profile from Chess.com...'}
               {syncStatus === 'syncing-games' && 'Importing games for this player...'}
               {syncStatus === 'updating-existing' && 'Checking for new games...'}
